@@ -1,5 +1,7 @@
 #include <catch2/catch.hpp>
 
+#include <GSL/gsl>
+
 #include <functional>
 #include <vector>
 #include <variant>
@@ -73,6 +75,10 @@ public:
     bool isDynamic() const {
         return mFunc != nullptr;
     }
+
+    bool dependsOn(const Property& other){
+        return false;
+    }
 };
 
 
@@ -143,4 +149,35 @@ TEST_CASE("Properties", "[properties]")
     REQUIRE(p1 == 30);
     REQUIRE(p2 == 22);
 
+}
+
+TEST_CASE("DAG", "[properties]")
+{
+    //https://www.electricmonk.nl/log/2008/08/07/dependency-resolving-algorithm/
+    Property a,b,c,d,e;
+
+    a.set(0);
+    b.set([](int a){ return a + 1; }, a);
+    c.set([](int b){ return b + 1; }, b);
+    d.set([](int a, int b){ return a + b + 1; }, a, b);
+    e.set([](int b, int c){ return b + c + 1; }, b, c);
+
+    REQUIRE(a.isLiteral());
+
+    SECTION("Direct dependencies"){
+        REQUIRE(b.dependsOn(a));    
+        REQUIRE(c.dependsOn(b));
+
+        REQUIRE(d.dependsOn(a));
+        REQUIRE(d.dependsOn(c));
+        
+        REQUIRE(e.dependsOn(b)); 
+        REQUIRE( e.dependsOn(c)); 
+    }
+
+    SECTION("Indirect dependencies"){
+        REQUIRE(c.dependsOn(a));
+        REQUIRE(d.dependsOn(b));
+        REQUIRE(e.dependsOn(a));
+    }       
 }
