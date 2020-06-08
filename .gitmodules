@@ -1,0 +1,9 @@
+[submodule "3rdparty/skia"]
+	path = 3rdparty/skia
+	url = https://skia.googlesource.com/skia.git
+[submodule "3rdparty/arcana.cpp"]
+	path = 3rdparty/arcana.cpp
+	url = https://github.com/microsoft/arcana.cpp.git
+[submodule "3rdparty/Catch2"]
+	path = 3rdparty/Catch2
+	url = https://github.com/catchorg/Catch2.git
