@@ -1,0 +1,8 @@
+---
+BasedOnStyle: Microsoft
+AlignEscapedNewlines: Left
+AlwaysBreakTemplateDeclarations: 'Yes'
+PointerAlignment: Left
+SortUsingDeclarations: 'true'
+BreakBeforeBraces: Attach
+
