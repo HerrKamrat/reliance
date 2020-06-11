@@ -1,6 +1,6 @@
 #include <catch2/catch.hpp>
 
-#include <GSL/gsl>
+#include <gsl/gsl>
 
 #include <functional>
 #include <ostream>
@@ -11,10 +11,11 @@
 class Property;
 class Ref;
 
-std::variant<int, float, bool, std::string>;
-
 class Property {
+    private:
   protected:
+          std::string mDebugName;
+
     int mValue;
     std::function<int()> mFunc;
 
@@ -25,6 +26,9 @@ class Property {
     using type = int;
 
     Property() = default;
+    Property(std::string debugName){
+        mDebugName = debugName;
+    }
     ~Property() {
         if (isDynamic()) {
             reset();
@@ -84,6 +88,11 @@ class Property {
 
     void evaluate() {
         if (isDynamic()) {
+    std::stringstream ss;
+    ss << mDebugName << ".evaluate()\n";
+    WARN(ss.str());
+
+
             mValue = mFunc();
             for (auto it = mChildren.begin(); it != mChildren.end(); it++) {
                 (*it)->evaluate();
@@ -108,10 +117,20 @@ class Property {
     }
 
     bool dependsOn(const Property& other) {
+        if(isLiteral() || &other == this){
+            return false;
+        }
+
+        for(auto p : mParents){
+            if(p == &other || p->dependsOn(other)){
+                return true;
+            }
+        }
+
         return false;
     }
 
-    std::ostream& printDebugInfo(std::ostream& os) const {
+    std::ostream& printDebugWARN(std::ostream& os) const {
         os << "Property, mValue: " << mValue;
         return os;
     }
@@ -178,24 +197,24 @@ TEST_CASE("Properties", "[properties]") {
     REQUIRE(p2 == 22);
 }
 
-/*TEST_CASE("DAG", "[properties]") {
+TEST_CASE("DAG", "[properties]") {
     // https://www.electricmonk.nl/log/2008/08/07/dependency-resolving-algorithm/
-    Property a, b, c, d, e;
+    Property a("a"), b("b"), c("c"), d("d"), e("e");
 
     a.set(0);
     b.set([](int a) { return a + 1; }, a);
     c.set([](int b) { return b + 1; }, b);
-    d.set([](int a, int b) { return a + b + 1; }, a, b);
+    d.set([](int a, int c) { return a + c + 1; }, a, c);
     e.set([](int b, int c) { return b + c + 1; }, b, c);
 
     std::stringstream ss;
-    a.printDebugInfo(ss) << '\n';
-    b.printDebugInfo(ss) << '\n';
-    c.printDebugInfo(ss) << '\n';
-    d.printDebugInfo(ss) << '\n';
-    e.printDebugInfo(ss);
+    a.printDebugWARN(ss) << '\n';
+    b.printDebugWARN(ss) << '\n';
+    c.printDebugWARN(ss) << '\n';
+    d.printDebugWARN(ss) << '\n';
+    e.printDebugWARN(ss);
 
-    INFO(ss.str());
+    WARN(ss.str());
 
     REQUIRE(a.isLiteral());
 
@@ -215,4 +234,9 @@ TEST_CASE("Properties", "[properties]") {
         REQUIRE(d.dependsOn(b));
         REQUIRE(e.dependsOn(a));
     }
-}*/
+
+    a.set(1);
+    WARN(";D");
+
+    //REQUIRE(false);
+}
